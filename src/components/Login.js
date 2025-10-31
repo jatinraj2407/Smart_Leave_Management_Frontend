@@ -36,6 +36,10 @@ function Login({ role = 'User' }) {
     }
   };
 
+  const handleBack = () => {
+    navigate('/');
+  };
+
   return (
     <div className="login-container d-flex justify-content-center align-items-center vh-100">
       <div className="login-card p-4 shadow rounded bg-white">
@@ -89,6 +93,12 @@ function Login({ role = 'User' }) {
           >
             Don’t have an account? Register
           </Link>
+        </div>
+
+        <div className="mt-4 text-center">
+          <button onClick={handleBack} className="btn btn-outline-secondary w-100">
+            ← Back to Role Selection
+          </button>
         </div>
       </div>
     </div>
