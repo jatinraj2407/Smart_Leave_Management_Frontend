@@ -25,6 +25,9 @@ export const registerUser = (data) => API.post('/users/registration', data);
 
 export const applyLeave = (userId, data) => API.post(`/users/apply-leave/${userId}`, data);
 
+export const calculateDuration = (userId, data) =>
+  API.post(`/users/calculate-duration/${userId}`, data);
+
 export const getLeaveBalance = (userId) => API.get(`/users/get-leave-balance/${userId}`);
 
 export const getUserLeaveRequests = (userId) =>
@@ -32,3 +35,9 @@ export const getUserLeaveRequests = (userId) =>
 
 export const getAllLeaveRequests = (userId) =>
   API.get(`/users/get-all-leave-requests/${userId}`);
+
+export const getHolidayCalendar = (userId) =>
+  API.get(`/users/get-holidays/${userId}`);
+
+export const updateLeaveStatus = (leaveId, status) =>
+  API.put(`/admin/update-leave-status/${leaveId}`, { status });

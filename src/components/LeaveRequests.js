@@ -92,7 +92,7 @@ function LeaveRequests() {
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Status</th>
-                <th>Reason</th>
+                <th>Approver</th>
               </tr>
             </thead>
             <tbody>
@@ -102,8 +102,8 @@ function LeaveRequests() {
                   <td>{req.leaveType}</td>
                   <td>{req.startDate}</td>
                   <td>{req.endDate}</td>
-                  <td>{req.status}</td>
-                  <td>{req.reason}</td>
+                  <td>{req.leaveStatus}</td>
+                  <td>{req.approver}</td>
                 </tr>
               ))}
             </tbody>
