@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { registerAdmin } from '../services/api.js';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 function AdminRegister() {
   const [form, setForm] = useState({
@@ -16,6 +17,7 @@ function AdminRegister() {
   });
 
   const [errorMsg, setErrorMsg] = useState('');
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,7 +28,6 @@ function AdminRegister() {
     e.preventDefault();
     setErrorMsg('');
 
-    // Basic client-side validation
     for (const key in form) {
       if (!form[key]) {
         setErrorMsg(`Please fill out the ${key} field.`);
@@ -35,8 +36,9 @@ function AdminRegister() {
     }
 
     try {
-      const res = await axios.post('/admin/registration', form);
+      const res = await registerAdmin(form);
       alert(res.data); // "Admin registered successfully"
+      navigate('/admin-login'); // Redirect after success
     } catch (error) {
       const msg = error.response?.data;
       setErrorMsg(typeof msg === 'string' ? msg : 'Registration failed. Please check your inputs.');
@@ -139,8 +141,8 @@ function AdminRegister() {
 
         <div className="mb-3">
           <input
-            type="password"
-            name="password"
+            name= "password"
+            type = "password"
             className="form-control"
             placeholder="Password"
             minLength={6}

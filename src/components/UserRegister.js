@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
+import { registerUser } from '../services/api.js'; // Make sure the path is correct
 
 function UserRegister() {
   const [form, setForm] = useState({
@@ -16,6 +17,7 @@ function UserRegister() {
   });
 
   const [errorMsg, setErrorMsg] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,7 +28,6 @@ function UserRegister() {
     e.preventDefault();
     setErrorMsg('');
 
-    // Basic client-side validation
     for (const key in form) {
       if (!form[key]) {
         setErrorMsg(`Please fill out the ${key} field.`);
@@ -35,8 +36,9 @@ function UserRegister() {
     }
 
     try {
-      const res = await axios.post('/users/registration', form);
+      const res = await registerUser(form); // ✅ Using API wrapper
       alert(res.data); // Expected: "User registered successfully"
+      navigate('/user-login'); // ✅ Redirect after success
     } catch (error) {
       const msg = error.response?.data;
       setErrorMsg(typeof msg === 'string' ? msg : 'Registration failed. Please check your inputs.');
@@ -139,9 +141,9 @@ function UserRegister() {
 
         <div className="mb-3">
           <input
-            type="password"
-            name="password"
-            className="form-control"
+          name= "password"
+          type = "password"
+          className ="form-control"
             placeholder="Password"
             minLength={6}
             title="Password must be at least 6 characters long"
