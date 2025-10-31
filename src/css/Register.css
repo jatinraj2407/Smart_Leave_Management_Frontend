@@ -1,0 +1,15 @@
+.login-container {
+    background-color: #f8f9fc;
+  }
+  .login-card {
+    width: 400px;
+    border-radius: 12px;
+  }
+  .login-card h4 {
+    font-weight: 600;
+  }
+  .btn-primary {
+    background-color: Red;
+    border: none;
+  }
+   
