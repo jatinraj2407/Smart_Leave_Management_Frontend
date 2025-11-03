@@ -64,10 +64,6 @@ export const getUserLeaveRequests = (userId) => API.get(`/users/get-leave-reques
 // ✅ Admin APIs
 export const getAllLeaveRequests = (userId) => API.get(`/users/get-all-leave-requests/${userId}`);
 
-
-export const getAllLeaveRequests = (userId) =>
-  API.get(`/users/get-all-leave-requests/${userId}`);
-
 export const getHolidayCalendar = (userId) =>
   API.get(`/users/get-holidays/${userId}`);
 

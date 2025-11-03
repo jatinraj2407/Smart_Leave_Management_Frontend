@@ -1,0 +1,12 @@
+.container h3 {
+  color: #00796b;
+  font-weight: 600;
+}
+
+.table th {
+  font-weight: 600;
+}
+
+.table td {
+  vertical-align: middle;
+}
