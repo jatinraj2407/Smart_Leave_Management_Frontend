@@ -18,6 +18,7 @@ import ApplyLeavePolicy from './components/admin/ApplyLeavePolicy';
 import AddCountryCalendar from './components/admin/AddCountryCalendar';
 import GetAllUsers from './components/admin/GetAllUsers';
 import GetAllRequests from './components/admin/GetAllRequests';
+import AdminHome from './components/admin/AdminHome';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/admin-register" element={<AdminRegister />} />
         
         <Route path="/admin-dashboard" element={<AdminDashboard />}>
+          <Route index element={<AdminHome />} />
           <Route path="add-role" element={<AddRole />} />
           <Route path="apply-leave-policy" element={<ApplyLeavePolicy />} />
           <Route path="add-country-calendar" element={<AddCountryCalendar />} />

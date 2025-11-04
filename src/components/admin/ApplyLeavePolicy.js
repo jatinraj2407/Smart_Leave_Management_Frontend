@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../css/admin/ApplyLeavePolicy.css';
 
@@ -15,6 +15,11 @@ function ApplyLeavePolicy() {
   });
 
   const [message, setMessage] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [policies, setPolicies] = useState([]);
+
+  const token = sessionStorage.getItem('authToken');
+  const adminId = sessionStorage.getItem('userId');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,9 +29,6 @@ function ApplyLeavePolicy() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
-
-    const token = sessionStorage.getItem('authToken');
-    const adminId = sessionStorage.getItem('userId');
 
     if (!token || !adminId) {
       setMessage('Missing authentication. Please log in again.');
@@ -54,47 +56,127 @@ function ApplyLeavePolicy() {
         lossOfPay: '',
         totalLeaves: '',
       });
+      fetchPolicies(); // Refresh list
     } catch (error) {
       const msg = error.response?.data || 'Failed to apply leave policy.';
       setMessage(typeof msg === 'string' ? msg : 'Something went wrong.');
     }
   };
 
+  const fetchPolicies = async () => {
+    if (!token || !adminId) return;
+
+    try {
+      const res = await axios.get(
+        `http://localhost:8765/admin/get-all-roles-based-leaves-policies/${adminId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setPolicies(res.data);
+    } catch (error) {
+      console.error('Error fetching policies:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPolicies();
+  }, []);
+
   return (
     <div className="container mt-5">
-      <h3>Apply Leave Policy 📝</h3>
-      <form onSubmit={handleSubmit} className="mt-4">
-        <div className="mb-3">
-          <label className="form-label">Role</label>
-          <input
-            type="text"
-            name="role"
-            className="form-control"
-            value={form.role}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      <h3>Leave Policies 📝</h3>
 
-        {['sickLeave', 'earnedLeave', 'casualLeave', 'paternityLeave', 'maternityLeave', 'lossOfPay', 'totalLeaves'].map((field) => (
-          <div className="mb-3" key={field}>
-            <label className="form-label">{field}</label>
-            <input
-              type="number"
-              step="0.1"
-              name={field}
-              className="form-control"
-              value={form[field]}
+      <button className="btn btn-primary mt-3" onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Hide Form' : 'Apply New Leave Policy'}
+      </button>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mt-4">
+          <div className="mb-3">
+            <label className="form-label">Role</label>
+            <select
+              name="role"
+              className="form-select"
+              value={form.role}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="">Select a Role</option>
+              {['TEAM_MEMBER', 'TEAM_LEAD', 'TEAM_MANAGER', 'HR_MANAGER', 'ADMIN'].map((role) => (
+                <option
+                  key={role}
+                  value={role}
+                  disabled={policies.some((p) => p.role === role)} // Disable if policy already exists for this role
+                >
+                  {role}
+                </option>
+              ))}
+            </select>
           </div>
-        ))}
 
-        <button type="submit" className="btn btn-success">Submit Policy</button>
-      </form>
+          {[
+            'sickLeave',
+            'earnedLeave',
+            'casualLeave',
+            'paternityLeave',
+            'maternityLeave',
+            'lossOfPay',
+            'totalLeaves',
+          ].map((field) => (
+            <div className="mb-3" key={field}>
+              <label className="form-label">{field}</label>
+              <input
+                type="number"
+                step="0.1"
+                name={field}
+                className="form-control"
+                value={form[field]}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          ))}
+
+          <button type="submit" className="btn btn-success">Submit Policy</button>
+        </form>
+      )}
 
       {message && <div className="alert alert-info mt-3">{message}</div>}
+
+      <h5 className="mt-5">📋 Existing Leave Policies</h5>
+      <div className="table-responsive mt-3">
+        <table className="table table-bordered table-hover">
+          <thead className="table-success">
+            <tr>
+              <th>Role</th>
+              <th>Sick</th>
+              <th>Earned</th>
+              <th>Casual</th>
+              <th>Paternity</th>
+              <th>Maternity</th>
+              <th>Loss of Pay</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {policies.map((policy, index) => (
+              <tr key={index}>
+                <td>{policy.role}</td>
+                <td>{policy.sickLeave}</td>
+                <td>{policy.earnedLeave}</td>
+                <td>{policy.casualLeave}</td>
+                <td>{policy.paternityLeave}</td>
+                <td>{policy.maternityLeave}</td>
+                <td>{policy.lossOfPay}</td>
+                <td>{policy.totalLeaves}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

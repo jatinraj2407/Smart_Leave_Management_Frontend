@@ -7,10 +7,10 @@ function GetAllRequests() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('authToken');
-    const adminId = sessionStorage.getItem('userId');
+  const token = sessionStorage.getItem('authToken');
+  const adminId = sessionStorage.getItem('userId');
 
+  const fetchRequests = () => {
     if (!token || !adminId) {
       setMessage('Missing authentication. Please log in again.');
       setLoading(false);
@@ -32,10 +32,35 @@ function GetAllRequests() {
         setMessage('Failed to fetch leave requests.');
         setLoading(false);
       });
+  };
+
+  const handleAction = async (leaveId, action) => {
+    const endpoint = action === 'approve' ? 'approve' : 'reject';
+
+    try {
+      const res = await axios.post(
+        `http://localhost:8765/admin/${endpoint}/${adminId}/${leaveId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setMessage(res.data);
+      fetchRequests(); // Refresh list
+    } catch (error) {
+      const msg = error.response?.data || `Failed to ${action} request.`;
+      setMessage(typeof msg === 'string' ? msg : 'Something went wrong.');
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
   }, []);
 
   if (loading) return <div className="container mt-5">Loading leave requests...</div>;
-  if (message) return <div className="container mt-5 alert alert-danger">{message}</div>;
+  if (message) return <div className="container mt-5 alert alert-info">{message}</div>;
 
   return (
     <div className="container mt-5">
@@ -53,7 +78,9 @@ function GetAllRequests() {
               <th>End Date</th>
               <th>Duration</th>
               <th>Status</th>
+              <th>Leave Status</th>
               <th>Approver</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -68,7 +95,30 @@ function GetAllRequests() {
                 <td>{req.endDate}</td>
                 <td>{req.duration}</td>
                 <td>{req.leaveStatus}</td>
+                <td>{req.leaveTypePlannedAndUnplanned}</td>
                 <td>{req.approver || '—'}</td>
+                <td>
+                  {req.leaveStatus === 'APPROVED' ? (
+                    <span className="badge bg-success">Approved</span>
+                  ) : req.leaveStatus === 'REJECTED' ? (
+                    <span className="badge bg-danger">Rejected</span>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-success btn-sm me-2"
+                        onClick={() => handleAction(req.leaveId, 'approve')}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleAction(req.leaveId, 'reject')}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

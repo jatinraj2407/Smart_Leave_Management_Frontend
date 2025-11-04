@@ -7,9 +7,10 @@ function GetAllUsers() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('authToken');
+  const token = sessionStorage.getItem('authToken');
+  const adminId = sessionStorage.getItem('userId');
 
+  const fetchUsers = () => {
     if (!token) {
       setMessage('Missing authentication. Please log in again.');
       setLoading(false);
@@ -31,10 +32,34 @@ function GetAllUsers() {
         setMessage('Failed to fetch users.');
         setLoading(false);
       });
+  };
+
+  const handleDelete = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const res = await axios.delete(
+        `http://localhost:8765/admin/delete-user/${adminId}/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setMessage(res.data);
+      fetchUsers(); // Refresh list
+    } catch (error) {
+      const msg = error.response?.data || 'Failed to delete user.';
+      setMessage(typeof msg === 'string' ? msg : 'Something went wrong.');
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
   if (loading) return <div className="container mt-5">Loading users...</div>;
-  if (message) return <div className="container mt-5 alert alert-danger">{message}</div>;
+  if (message) return <div className="container mt-5 alert alert-info">{message}</div>;
 
   return (
     <div className="container mt-5">
@@ -51,6 +76,7 @@ function GetAllUsers() {
               <th>Country</th>
               <th>Role</th>
               <th>Gender</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -64,6 +90,14 @@ function GetAllUsers() {
                 <td>{user.countryName}</td>
                 <td>{user.role?.roleName || user.userRole}</td>
                 <td>{user.gender}</td>
+                <td>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDelete(user.userId)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

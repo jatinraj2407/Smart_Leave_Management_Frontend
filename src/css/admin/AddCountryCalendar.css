@@ -15,3 +15,25 @@
 .btn-success:hover {
   background-color: #004d40;
 }
+
+.btn-primary {
+  background-color: #00796b;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #004d40;
+}
+
+.btn-warning {
+  background-color: #f57c00;
+  border: none;
+}
+
+.btn-warning:hover {
+  background-color: #e65100;
+}
+
+.table th {
+  font-weight: 600;
+}

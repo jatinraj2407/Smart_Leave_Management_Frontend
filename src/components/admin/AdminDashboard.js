@@ -16,17 +16,12 @@ function AdminDashboard() {
         <h1>🛡️ Admin Panel</h1>
         <div>
           <Link to="/admin-dashboard/add-role">AddRole</Link>
-          <Link to="/admin-dashboard/apply-leave-policy">ALP</Link>
-          <Link to="/admin-dashboard/add-country-calendar">ACCH</Link>
-          <Link to="/admin-dashboard/get-all-users">GAU</Link>
-          <Link to="/admin-dashboard/get-all-requests">GAR</Link>
+          <Link to="/admin-dashboard/apply-leave-policy">Leave policies</Link>
+          <Link to="/admin-dashboard/add-country-calendar">Calendar</Link>
+          <Link to="/admin-dashboard/get-all-users">Users</Link>
+          <Link to="/admin-dashboard/get-all-requests">Requests</Link>
           <button onClick={handleSignOut}>Sign Out</button>
         </div>
-      </div>
-
-      <div className="container mt-5">
-        <h2>Welcome Admin! 🎉</h2>
-        <p className="lead">Use the navigation bar to manage roles, leave policies, holidays, users, and requests.</p>
       </div>
 
       <Outlet />
