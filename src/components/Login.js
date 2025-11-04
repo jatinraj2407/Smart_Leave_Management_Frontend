@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { login } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/Login.css';
 
@@ -22,16 +21,29 @@ function Login({ role = 'User' }) {
       const res = await login(role, { userName, password });
 
       if (res.status === 200 && res.data.token) {
-        const decoded = jwtDecode(res.data.token);
+        const userId = res.data.userId;
+        const rawRole = res.data.role || role;
+
+        // Normalize role for consistent access control
+        const normalizedRole =
+          rawRole === 'HR' ? 'HR_MANAGER' :
+          rawRole === 'Team_Manager' ? 'TEAM_MANAGER' :
+          rawRole === 'Team_Member' ? 'TEAM_MEMBER' :
+          rawRole;
+
+        // Store session data
         sessionStorage.setItem('authToken', res.data.token);
-        sessionStorage.setItem('userId', decoded.userId);
-        sessionStorage.setItem('role', role);
-        navigate(role === 'Admin' ? '/admin-dashboard' : '/user-dashboard');
+        sessionStorage.setItem('userId', userId);
+        sessionStorage.setItem('userRole', normalizedRole);
+        sessionStorage.setItem('role', rawRole);
+
+        // Navigate based on role
+        navigate(normalizedRole === 'Admin' ? '/admin-dashboard' : '/user-dashboard');
       } else {
         alert('Login failed. No token received.');
       }
     } catch (error) {
-      const msg = error.response?.data;
+      const msg = error.response?.data?.message || error.response?.data;
       alert(typeof msg === 'string' ? msg : 'Login failed. Please check your username and password.');
     }
   };

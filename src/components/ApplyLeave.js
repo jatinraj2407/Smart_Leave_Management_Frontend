@@ -4,8 +4,10 @@ import {
   calculateDuration,
   getLeaveBalance,
 } from '../services/api';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import '../css/UserDashboard.css';
 
 function ApplyLeave() {
@@ -17,6 +19,9 @@ function ApplyLeave() {
   const [duration, setDuration] = useState(null);
   const [balance, setBalance] = useState(null);
   const [calculating, setCalculating] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const userId = parseInt(sessionStorage.getItem('userId'), 10);
   const today = new Date().toISOString().split('T')[0];
@@ -29,6 +34,15 @@ function ApplyLeave() {
     { label: 'Maternity Leave', value: 'MATERNITY', key: 'maternityLeave' },
   ];
 
+  const allLeavesLapsed = () => {
+    if (!balance) return false;
+    return leaveOptions.every(opt => !balance?.[opt.key] || balance?.[opt.key] === 0);
+  };
+
+  useEffect(() => {
+    document.body.className = darkMode ? 'dark-mode' : 'light-mode';
+  }, [darkMode]);
+
   useEffect(() => {
     const fetchBalance = async () => {
       try {
@@ -38,7 +52,9 @@ function ApplyLeave() {
         console.error('Failed to fetch leave balance:', err);
       }
     };
-    fetchBalance();
+    if (userId) {
+      fetchBalance();
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -58,24 +74,48 @@ function ApplyLeave() {
         setDuration(null);
       }
     };
-    autoCalculate();
+    if (userId) {
+      autoCalculate();
+    }
   }, [startDate, endDate, userId]);
+
+  const resetForm = () => {
+    setLeaveType('');
+    setSecondaryLeaveType('');
+    setStartDate('');
+    setEndDate('');
+    setComments('');
+    setDuration(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
-    if (!leaveType || !startDate || !endDate || !duration) {
+    setSubmitting(true);
+    setSuccessMessage('');  // clear previous
+
+    if (!userId || isNaN(userId)) {
+      alert('Session expired. Please log in again.');
+      sessionStorage.clear();
+      navigate('/user-login');
+      return;
+    }
+
+    if (!leaveType || !startDate || !endDate || duration === null) {
       alert('Please fill in all required fields.');
+      setSubmitting(false);
       return;
     }
 
     if (new Date(endDate) < new Date(startDate)) {
       alert('End date must be after start date.');
+      setSubmitting(false);
       return;
     }
 
     const primaryKey = leaveType.toLowerCase() + 'Leave';
-    const primaryAvailable = balance[primaryKey] || 0;
+    const primaryAvailable = balance?.[primaryKey] || 0;
     const remaining = duration - primaryAvailable;
 
     try {
@@ -86,10 +126,13 @@ function ApplyLeave() {
           endDate,
           comments,
         });
-        alert(`Leave applied successfully for ${duration} day(s)!`);
+        const msg = `✅ Leave applied successfully for ${duration} day(s)!`;
+        console.log("DEBUG: Success branch, message:", msg);
+        setSuccessMessage(msg);
       } else {
         if (!secondaryLeaveType) {
-          alert(`You only have ${primaryAvailable} day(s) of ${leaveType} leave. Please select another leave type for remaining ${remaining} day(s).`);
+          alert(`Not enough ${leaveType} balance. Please select a fallback leave type.`);
+          setSubmitting(false);
           return;
         }
 
@@ -98,8 +141,8 @@ function ApplyLeave() {
         const splitStart = new Date(midDate);
         splitStart.setDate(splitStart.getDate() + 1);
 
-        const splitStartStr = splitStart.toISOString().split('T')[0];
         const midDateStr = midDate.toISOString().split('T')[0];
+        const splitStartStr = splitStart.toISOString().split('T')[0];
 
         await applyLeave(userId, {
           leaveType,
@@ -115,131 +158,150 @@ function ApplyLeave() {
           comments: comments + ' (Fallback)',
         });
 
-        alert(`Leave split: ${primaryAvailable} day(s) as ${leaveType}, ${remaining} day(s) as ${secondaryLeaveType}`);
+        const msg = `✅ Leave split: ${primaryAvailable} day(s) as ${leaveType}, ${remaining} day(s) as ${secondaryLeaveType}`;
+        console.log("DEBUG: Success split branch, message:", msg);
+        setSuccessMessage(msg);
       }
 
-      setLeaveType('');
-      setSecondaryLeaveType('');
-      setStartDate('');
-      setEndDate('');
-      setComments('');
-      setDuration(null);
+      // At this point: successMessage is set *immediately*
+      // Now you can decide: either reload now or let user stay.
+      // If you want immediate reload, uncomment below:
+      // window.location.reload();
+
+      // Otherwise: maybe reset the form after some time:
+      setTimeout(() => {
+        resetForm();
+        setSubmitting(false);
+        // Optionally clear the message again:
+        // setSuccessMessage('');
+      }, 1500);
+
     } catch (error) {
       console.error('Leave application failed:', error);
       alert('Failed to apply leave. Please try again.');
+      setSubmitting(false);
     }
-  };
-
-  const handleSignOut = () => {
-    sessionStorage.clear();
-    navigate('/user-login');
   };
 
   return (
     <>
-      <div className="navbar">
-        <h1>Smart Leave Manager</h1>
-        <div>
-          <Link to="/user-dashboard">Dashboard</Link>
-          <Link to="/leave-calendar">Calendar</Link>
-          <Link to="/leave-balance">Balance</Link>
-          <Link to="/leave-requests">Requests</Link>
-          <button onClick={handleSignOut} className="btn btn-link text-white">Sign Out</button>
-        </div>
-      </div>
+      <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <div className="container mt-5">
-        <h2>Apply for Leave</h2>
-        <form onSubmit={handleSubmit} className="card p-4 mt-4 shadow-sm">
-          <div className="mb-3">
-            <label className="form-label">Leave Type</label>
-            <select
-              className="form-select"
-              value={leaveType}
-              onChange={(e) => setLeaveType(e.target.value)}
-              required
-            >
-              <option value="">Select Leave Type</option>
-              {leaveOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label} ({balance?.[opt.key] ?? '-'})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2 className="mb-0">📝 Apply for Leave</h2>
+        </div>
 
-          <div className="mb-3">
-            <label className="form-label">Start Date</label>
-            <input
-              type="date"
-              className="form-control"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-              min={today}
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">End Date</label>
-            <input
-              type="date"
-              className="form-control"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-              min={startDate || today}
-            />
-          </div>
-
-          {calculating && (
-            <div className="mb-3 text-muted">Calculating duration...</div>
-          )}
-
-          {duration !== null && !calculating && (
-            <div className="mb-3">
-              <p><strong>Calculated Duration:</strong> {duration} day(s)</p>
+        <div className="card p-4 shadow-sm">
+          {successMessage && (
+            <div className="alert alert-success text-center mb-3">
+              {successMessage}
             </div>
           )}
 
-          {duration !== null && balance && leaveType && balance[leaveType.toLowerCase() + 'Leave'] < duration && (
+          {allLeavesLapsed() && (
+            <div className="alert alert-warning text-center">
+              All leaves have lapsed or are unavailable. Please contact HR for assistance.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label">
-                Not enough {leaveType} balance. Select another leave type for remaining {duration - balance[leaveType.toLowerCase() + 'Leave']} day(s):
-              </label>
+              <label className="form-label">Leave Type</label>
               <select
                 className="form-select"
-                value={secondaryLeaveType}
-                onChange={(e) => setSecondaryLeaveType(e.target.value)}
+                value={leaveType}
+                onChange={(e) => setLeaveType(e.target.value)}
                 required
+                disabled={submitting}
               >
-                <option value="">Select Additional Leave Type</option>
-                {leaveOptions
-                  .filter((opt) => opt.value !== leaveType)
-                  .map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label} ({balance?.[opt.key] ?? '-'})
-                    </option>
-                  ))}
+                <option value="">Select Leave Type</option>
+                {leaveOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label} ({balance?.[opt.key] ?? '-'})
+                  </option>
+                ))}
               </select>
             </div>
-          )}
 
-          <div className="mb-3">
-            <label className="form-label">Comments</label>
-            <textarea
-              className="form-control"
-              placeholder="Optional comments"
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              rows="3"
-            />
-          </div>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Start Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  required
+                  min={today}
+                  disabled={submitting}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">End Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  required
+                  min={startDate || today}
+                  disabled={submitting}
+                />
+              </div>
+            </div>
 
-          <button type="submit" className="btn btn-primary w-100">
-            Submit Leave Request
-          </button>
-        </form>
+            {calculating && (
+              <div className="mb-3 text-muted">Calculating duration…</div>
+            )}
+
+            {duration !== null && !calculating && (
+              <div className="mb-3">
+                <p><strong>Calculated Duration:</strong> {duration} day(s)</p>
+              </div>
+            )}
+
+            {duration !== null && balance && leaveType && (balance?.[leaveType.toLowerCase() + 'Leave'] || 0) < duration && (
+              <div className="mb-3">
+                <label className="form-label">
+                  Not enough {leaveType} balance. Select another leave type for remaining {duration - (balance?.[leaveType.toLowerCase() + 'Leave'] || 0)} days:
+                </label>
+                <select
+                  className="form-select"
+                  value={secondaryLeaveType}
+                  onChange={(e) => setSecondaryLeaveType(e.target.value)}
+                  required
+                  disabled={submitting}
+                >
+                  <option value="">Select Additional Leave Type</option>
+                  {leaveOptions
+                    .filter((opt) => opt.value !== leaveType)
+                    .map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label} ({balance?.[opt.key] ?? '-'})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+
+            <div className="mb-3">
+              <label className="form-label">Comments</label>
+              <textarea
+                className="form-control"
+                placeholder="Optional comments"
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                rows="3"
+                disabled={submitting}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
+              Submit Leave Request
+            </button>
+          </form>
+        </div>
       </div>
     </>
   );

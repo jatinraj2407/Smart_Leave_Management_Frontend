@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
+import { registerUser, getAllCountries } from '../services/api.js'; // ✅ ensure path is correct
 
 function UserRegister() {
   const [form, setForm] = useState({
@@ -16,6 +17,59 @@ function UserRegister() {
   });
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [countries, setCountries] = useState([]);        // ✅ dropdown options [{value,label}]
+  const [countriesLoading, setCountriesLoading] = useState(true);
+  const [countriesError, setCountriesError] = useState('');
+  const navigate = useNavigate();
+
+  // ✅ Fetch countries on mount
+  useEffect(() => {
+    let abort = false;
+
+    (async () => {
+      try {
+        setCountriesLoading(true);
+        setCountriesError('');
+        const res = await getAllCountries();
+
+        // Backend may return strings or objects; normalize to { value, label }
+        const data = res?.data || [];
+        const normalized = Array.isArray(data)
+          ? data
+              .map((c) => {
+                if (typeof c === 'string') return { value: c, label: c };
+                // Try common shapes: {name}, {countryName}, {id,name}, etc.
+                const label = c.name || c.countryName || c.label || c.value || '';
+                const value = c.name || c.countryName || c.value || label;
+                return { value, label };
+              })
+              .filter((c) => c.value && c.label)
+          : [];
+
+        if (!abort) {
+          setCountries(normalized);
+          console.log('Fetched countries:', normalized); // 🔍 Debug
+        }
+      } catch (e) {
+        if (!abort) setCountriesError(e?.response?.data || e.message || 'Failed to load countries.');
+      } finally {
+        if (!abort) setCountriesLoading(false);
+      }
+    })();
+
+    return () => {
+      abort = true;
+    };
+  }, []); // ✅ no dependency on form
+
+  // ✅ Separate effect to set default country after countries load
+  useEffect(() => {
+    if (!form.countryName && countries.length > 0) {
+      setForm((prev) => ({ ...prev, countryName: countries[0].value }));
+    }
+    // We intentionally exclude `form` from deps to avoid infinite loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,7 +80,7 @@ function UserRegister() {
     e.preventDefault();
     setErrorMsg('');
 
-    // Basic client-side validation
+    // Simple required validation
     for (const key in form) {
       if (!form[key]) {
         setErrorMsg(`Please fill out the ${key} field.`);
@@ -35,8 +89,9 @@ function UserRegister() {
     }
 
     try {
-      const res = await axios.post('/users/registration', form);
+      const res = await registerUser(form); // ✅ Using API wrapper
       alert(res.data); // Expected: "User registered successfully"
+      navigate('/user-login'); // ✅ Redirect after success
     } catch (error) {
       const msg = error.response?.data;
       setErrorMsg(typeof msg === 'string' ? msg : 'Registration failed. Please check your inputs.');
@@ -139,8 +194,8 @@ function UserRegister() {
 
         <div className="mb-3">
           <input
-            type="password"
             name="password"
+            type="password"
             className="form-control"
             placeholder="Password"
             minLength={6}
@@ -151,16 +206,35 @@ function UserRegister() {
           />
         </div>
 
+        {/* ✅ Country dropdown (replaces the text input) */}
         <div className="mb-3">
-          <input
-            type="text"
+          <label className="form-label">Country</label>
+          <select
             name="countryName"
-            className="form-control"
-            placeholder="Country Name"
+            className="form-select"
             value={form.countryName}
             onChange={handleChange}
             required
-          />
+            disabled={countriesLoading || !!countriesError}
+          >
+            {countriesLoading && <option>Loading countries…</option>}
+            {countriesError && <option disabled>Error loading countries</option>}
+            {!countriesLoading && !countriesError && (
+              <>
+                <option value="">Select Country</option>
+                {countries.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+          {countriesError && (
+            <small className="text-danger d-block mt-1">
+              {countriesError}
+            </small>
+          )}
         </div>
 
         {errorMsg && <div className="text-danger mb-3">{errorMsg}</div>}
