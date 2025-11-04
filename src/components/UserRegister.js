@@ -80,7 +80,6 @@ function UserRegister() {
     e.preventDefault();
     setErrorMsg('');
 
-    // Simple required validation
     for (const key in form) {
       if (!form[key]) {
         setErrorMsg(`Please fill out the ${key} field.`);
@@ -194,9 +193,12 @@ function UserRegister() {
 
         <div className="mb-3">
           <input
+
             name="password"
             type="password"
             className="form-control"
+
+
             placeholder="Password"
             minLength={6}
             title="Password must be at least 6 characters long"

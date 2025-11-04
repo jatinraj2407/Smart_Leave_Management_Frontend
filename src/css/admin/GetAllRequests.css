@@ -1,0 +1,49 @@
+.container h3 {
+  color: #00796b;
+  font-weight: 600;
+}
+.container{
+  width: 100%;
+}
+.table{
+   width: 100%;
+}
+.table th {
+  font-weight: 600;
+}
+.table-responsive{
+    width: 100%;
+}
+.table td {
+  vertical-align: middle;
+}
+.container h3 {
+  color: #00796b;
+  font-weight: 600;
+}
+
+.table th {
+  font-weight: 600;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.btn-success {
+  background-color: #388e3c;
+  border: none;
+}
+
+.btn-success:hover {
+  background-color: #2e7d32;
+}
+
+.btn-danger {
+  background-color: #d32f2f;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #b71c1c;
+}
