@@ -5,22 +5,12 @@
 
 .table th {
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .table td {
   vertical-align: middle;
-}
-.container h3 {
-  color: #00796b;
-  font-weight: 600;
-}
-
-.table th {
-  font-weight: 600;
-}
-
-.table td {
-  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .btn-danger {
@@ -30,4 +20,12 @@
 
 .btn-danger:hover {
   background-color: #b71c1c;
+}
+
+.toast-container {
+  z-index: 1055;
+}
+
+.toast-body {
+  font-weight: 500;
 }

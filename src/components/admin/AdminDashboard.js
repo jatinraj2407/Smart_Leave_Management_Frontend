@@ -13,7 +13,9 @@ function AdminDashboard() {
   return (
     <>
       <div className="navbar">
-        <h1>🛡️ Admin Panel</h1>
+      <Link to="/admin-dashboard">
+  <h1>🛡️ Admin Panel</h1>
+</Link>
         <div>
           <Link to="/admin-dashboard/add-role">AddRole</Link>
           <Link to="/admin-dashboard/apply-leave-policy">Leave policies</Link>

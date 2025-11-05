@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { addNewRole, getAllRoles } from '../../services/api';
 import '../../css/admin/AddRole.css';
 
 function AddRole() {
@@ -7,55 +7,32 @@ function AddRole() {
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [roles, setRoles] = useState([]);
-
-  const token = sessionStorage.getItem('authToken');
   const adminId = sessionStorage.getItem('userId');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = ({ target: { name, value } }) =>
     setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-
-    if (!token || !adminId) {
-      setMessage('Missing authentication. Please log in again.');
-      return;
-    }
+    if (!adminId) return setMessage('Missing authentication. Please log in again.');
 
     try {
-      const res = await axios.post(
-        `http://localhost:8765/admin/add-newrole/${adminId}`,
-        form,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await addNewRole(adminId, form);
       setMessage(res.data);
       setForm({ roleName: '', description: '' });
-      fetchRoles(); // Refresh role list
-    } catch (error) {
-      const msg = error.response?.data || 'Failed to add role.';
-      setMessage(typeof msg === 'string' ? msg : 'Something went wrong.');
+      fetchRoles();
+    } catch (err) {
+      setMessage(err.response?.data || 'Failed to add role.');
     }
   };
 
   const fetchRoles = async () => {
-    if (!token || !adminId) return;
-
+    if (!adminId) return;
     try {
-      const res = await axios.get(`http://localhost:8765/admin/get-all-roles/${adminId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await getAllRoles(adminId);
       setRoles(res.data);
-    } catch (error) {
-      console.error('Error fetching roles:', error);
+    } catch (err) {
+      console.error('Error fetching roles:', err);
     }
   };
 
@@ -87,7 +64,7 @@ function AddRole() {
                 <option
                   key={role}
                   value={role}
-                  disabled={roles.some((r) => r.roleName === role)} // Disable if already exists
+                  disabled={roles.some((r) => r.roleName === role)}
                 >
                   {role}
                 </option>
@@ -111,7 +88,20 @@ function AddRole() {
         </form>
       )}
 
-      {message && <div className="alert alert-info mt-3">{message}</div>}
+      {message && (
+        <div className="toast-container position-fixed top-0 end-0 p-3" style={{ zIndex: 1055 }}>
+          <div className="toast show text-bg-info border-0">
+            <div className="d-flex">
+              <div className="toast-body">{message}</div>
+              <button
+                type="button"
+                className="btn-close btn-close-white me-2 m-auto"
+                onClick={() => setMessage('')}
+              ></button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h5 className="mt-5">📋 Existing Roles</h5>
       <div className="table-responsive mt-3">
