@@ -47,3 +47,11 @@
 .btn-danger:hover {
   background-color: #b71c1c;
 }
+
+.toast-container {
+  z-index: 1055;
+}
+
+.toast-body {
+  font-weight: 500;
+}

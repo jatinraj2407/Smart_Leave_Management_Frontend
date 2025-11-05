@@ -24,21 +24,20 @@ function Login({ role = 'User' }) {
         const userId = res.data.userId;
         const rawRole = res.data.role || role;
 
-        // Normalize role for consistent access control
         const normalizedRole =
           rawRole === 'HR' ? 'HR_MANAGER' :
           rawRole === 'Team_Manager' ? 'TEAM_MANAGER' :
           rawRole === 'Team_Member' ? 'TEAM_MEMBER' :
+          rawRole === 'Team_Lead' ? 'TEAM_LEAD' :
+          rawRole === 'Admin' ? 'ADMIN' :
           rawRole;
 
-        // Store session data
         sessionStorage.setItem('authToken', res.data.token);
         sessionStorage.setItem('userId', userId);
         sessionStorage.setItem('userRole', normalizedRole);
         sessionStorage.setItem('role', rawRole);
 
-        // Navigate based on role
-        navigate(normalizedRole === 'Admin' ? '/admin-dashboard' : '/user-dashboard');
+        navigate(normalizedRole === 'ADMIN' ? '/admin-dashboard' : '/user-dashboard');
       } else {
         alert('Login failed. No token received.');
       }

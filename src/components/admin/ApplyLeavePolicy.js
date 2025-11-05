@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import {
+  addNewLeavePolicies,
+  getAllRolesBasedLeavePolicies
+} from '../../services/api';
 import '../../css/admin/ApplyLeavePolicy.css';
 
 function ApplyLeavePolicy() {
@@ -17,34 +20,17 @@ function ApplyLeavePolicy() {
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [policies, setPolicies] = useState([]);
-
-  const token = sessionStorage.getItem('authToken');
   const adminId = sessionStorage.getItem('userId');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = ({ target: { name, value } }) =>
     setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-
-    if (!token || !adminId) {
-      setMessage('Missing authentication. Please log in again.');
-      return;
-    }
+    if (!adminId) return setMessage('Missing authentication. Please log in again.');
 
     try {
-      const res = await axios.post(
-        `http://localhost:8765/admin/add-new-leave-policies/${adminId}`,
-        form,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await addNewLeavePolicies(adminId, form);
       setMessage(res.data);
       setForm({
         role: '',
@@ -56,28 +42,19 @@ function ApplyLeavePolicy() {
         lossOfPay: '',
         totalLeaves: '',
       });
-      fetchPolicies(); // Refresh list
-    } catch (error) {
-      const msg = error.response?.data || 'Failed to apply leave policy.';
-      setMessage(typeof msg === 'string' ? msg : 'Something went wrong.');
+      fetchPolicies();
+    } catch (err) {
+      setMessage(err.response?.data || 'Failed to apply leave policy.');
     }
   };
 
   const fetchPolicies = async () => {
-    if (!token || !adminId) return;
-
+    if (!adminId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:8765/admin/get-all-roles-based-leaves-policies/${adminId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await getAllRolesBasedLeavePolicies(adminId);
       setPolicies(res.data);
-    } catch (error) {
-      console.error('Error fetching policies:', error);
+    } catch (err) {
+      console.error('Error fetching policies:', err);
     }
   };
 
@@ -109,7 +86,7 @@ function ApplyLeavePolicy() {
                 <option
                   key={role}
                   value={role}
-                  disabled={policies.some((p) => p.role === role)} // Disable if policy already exists for this role
+                  disabled={policies.some((p) => p.role === role)}
                 >
                   {role}
                 </option>
@@ -124,7 +101,6 @@ function ApplyLeavePolicy() {
             'paternityLeave',
             'maternityLeave',
             'lossOfPay',
-            'totalLeaves',
           ].map((field) => (
             <div className="mb-3" key={field}>
               <label className="form-label">{field}</label>
@@ -144,7 +120,20 @@ function ApplyLeavePolicy() {
         </form>
       )}
 
-      {message && <div className="alert alert-info mt-3">{message}</div>}
+      {message && (
+        <div className="toast-container position-fixed top-0 end-0 p-3" style={{ zIndex: 1055 }}>
+          <div className="toast show text-bg-info border-0">
+            <div className="d-flex">
+              <div className="toast-body">{message}</div>
+              <button
+                type="button"
+                className="btn-close btn-close-white me-2 m-auto"
+                onClick={() => setMessage('')}
+              ></button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h5 className="mt-5">📋 Existing Leave Policies</h5>
       <div className="table-responsive mt-3">
@@ -162,16 +151,16 @@ function ApplyLeavePolicy() {
             </tr>
           </thead>
           <tbody>
-            {policies.map((policy, index) => (
-              <tr key={index}>
-                <td>{policy.role}</td>
-                <td>{policy.sickLeave}</td>
-                <td>{policy.earnedLeave}</td>
-                <td>{policy.casualLeave}</td>
-                <td>{policy.paternityLeave}</td>
-                <td>{policy.maternityLeave}</td>
-                <td>{policy.lossOfPay}</td>
-                <td>{policy.totalLeaves}</td>
+            {policies.map((p, i) => (
+              <tr key={i}>
+                <td>{p.role}</td>
+                <td>{p.sickLeave}</td>
+                <td>{p.earnedLeave}</td>
+                <td>{p.casualLeave}</td>
+                <td>{p.paternityLeave}</td>
+                <td>{p.maternityLeave}</td>
+                <td>{p.lossOfPay}</td>
+                <td>{p.totalLeaves}</td>
               </tr>
             ))}
           </tbody>

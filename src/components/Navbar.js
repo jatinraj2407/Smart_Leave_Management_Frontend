@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Navbar({ darkMode, setDarkMode }) {
   const navigate = useNavigate();
-  const userRole = sessionStorage.getItem('userRole'); // ✅ Read role from session
+  const userRole = sessionStorage.getItem('userRole');
 
   const handleSignOut = () => {
     sessionStorage.clear();
@@ -12,27 +12,44 @@ function Navbar({ darkMode, setDarkMode }) {
   };
 
   return (
-    <nav className={`navbar navbar-expand-lg ${darkMode ? 'navbar-dark bg-dark' : 'navbar-light bg-light'} px-4`}>
-      <span className="navbar-brand">Smart Leave Manager</span>
-      <div className="navbar-nav ms-auto">
-        <Link className="nav-link" to="/user-dashboard">Dashboard</Link>
-        <Link className="nav-link" to="/apply-leave">Apply Leave</Link>
-        <Link className="nav-link" to="/leave-calendar">Calendar</Link>
-        <Link className="nav-link" to="/leave-balance">Balance</Link>
-        <Link className="nav-link" to="/leave-requests">Requests</Link>
+    <nav className={`navbar navbar-expand-lg custom-navbar ${darkMode ? 'navbar-dark bg-dark' : 'navbar-light bg-light'}`}>
+      <div className="container-fluid">
+        <Link to="/user-dashboard" className="navbar-brand">
+          Smart Leave Manager
+        </Link>
 
-        {/* ✅ Conditionally show Approve Requests */}
-        {(userRole === 'HR_MANAGER' || userRole === 'TEAM_MANAGER') && (
-          <Link className="nav-link" to="/approve-requests">Approve Requests</Link>
-        )}
-
-        <button onClick={handleSignOut} className="btn btn-link nav-link">Sign Out</button>
         <button
-          className="btn btn-sm btn-outline-secondary ms-2"
-          onClick={() => setDarkMode(!darkMode)}
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
         >
-          {darkMode ? '☀ Light' : '🌙 Dark'}
+          <span className="navbar-toggler-icon"></span>
         </button>
+
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <div className="navbar-nav ms-auto">
+            <Link className="nav-link" to="/apply-leave">Apply Leave</Link>
+            <Link className="nav-link" to="/leave-calendar">Calendar</Link>
+            <Link className="nav-link" to="/leave-balance">Balance</Link>
+            <Link className="nav-link" to="/leave-requests">Requests</Link>
+
+            {(userRole === 'HR_MANAGER' || userRole === 'TEAM_MANAGER') && (
+              <Link className="nav-link" to="/approve-requests">Approve Requests</Link>
+            )}
+
+            <button onClick={handleSignOut} className="btn btn-link nav-link">Sign Out</button>
+            <button
+              className="btn btn-sm btn-outline-secondary ms-2"
+              onClick={() => setDarkMode(!darkMode)}
+            >
+              {darkMode ? '☀ Light' : '🌙 Dark'}
+            </button>
+          </div>
+        </div>
       </div>
     </nav>
   );

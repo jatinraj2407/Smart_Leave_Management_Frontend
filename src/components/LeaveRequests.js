@@ -90,9 +90,9 @@ function LeaveRequests() {
         <h2 className="mb-4 text-center">📋 Leave Requests</h2>
 
         {['Admin', 'Manager', 'HR_MANAGER', 'TEAM_MANAGER', 'ADMIN'].includes(role) && (
-          <div className="text-center mb-3">
+          <div className="text-center mb-3 d-flex flex-wrap justify-content-center gap-2">
             <button
-              className="btn btn-outline-primary me-2"
+              className="btn btn-outline-primary"
               onClick={() => setViewAll(false)}
               disabled={!viewAll}
             >
@@ -111,41 +111,45 @@ function LeaveRequests() {
         {loading ? (
           <div className="text-center text-muted">Loading leave requests...</div>
         ) : requests.length > 0 ? (
-          <table className="table table-bordered table-hover">
-            <thead className="table-light">
-              <tr>
-                <th>#</th>
-                <th>Leave Type</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Status</th>
-                <th>Approver</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((req, index) => (
-                <tr key={req.leaveId || index}>
-                  <td>{index + 1}</td>
-                  <td>{req.leaveType}</td>
-                  <td>{new Date(req.startDate).toLocaleDateString()}</td>
-                  <td>{new Date(req.endDate).toLocaleDateString()}</td>
-                  <td>{req.leaveStatus}</td>
-                  <td>{req.approver || '—'}</td>
-                  <td>
-                    {!viewAll && req.leaveStatus === 'PENDING' && (
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleCancel(req.leaveId)}
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </td>
+          <div className="table-responsive">
+            <table className="table table-bordered table-hover">
+              <thead className="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Leave Type</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Status</th>
+                  <th>Approver</th>
+                  <th>Comments</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {requests.map((req, index) => (
+                  <tr key={req.leaveId || index}>
+                    <td>{index + 1}</td>
+                    <td>{req.leaveType}</td>
+                    <td>{new Date(req.startDate).toLocaleDateString()}</td>
+                    <td>{new Date(req.endDate).toLocaleDateString()}</td>
+                    <td>{req.leaveStatus}</td>
+                    <td>{req.approver || '—'}</td>
+                    <td>{req.comments?.trim() || '—'}</td>
+                    <td>
+                      {!viewAll && req.leaveStatus === 'PENDING' && (
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleCancel(req.leaveId)}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p className="text-center text-muted">No leave requests found.</p>
         )}

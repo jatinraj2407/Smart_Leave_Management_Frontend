@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AuthGuard from './components/AuthGuard';
 import Login from './components/Login';
-import AdminRegister from './components/AdminRegister';
+import AdminRegister from './components/admin/AdminRegister';
 import UserRegister from './components/UserRegister';
 import ApplyLeave from './components/ApplyLeave';
 import LeaveCalendar from './components/LeaveCalendar';
